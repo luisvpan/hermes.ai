@@ -4,6 +4,8 @@ from PIL import Image
 import cv2
 import numpy as np
 
+alphabet_list = [chr(65 + i) for i in range(26)]
+
 class WhiteboardApp:
     def __init__(self, root):
         self.root = root
@@ -99,26 +101,54 @@ class WhiteboardApp:
         _, thresholded = cv2.threshold(cv_image_gray, 127, 255, cv2.THRESH_BINARY_INV)
 
         # Find contours in the image
-        contours, _ = cv2.findContours(thresholded, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        contours_info, _ = cv2.findContours(thresholded, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
         padding = 10  # Adjust as needed
         prediction = ""
+        
+        # Sort the contours from left to right
+        contours = sorted(contours_info, key=lambda contour: cv2.boundingRect(contour)[0])
 
         for i, contour in enumerate(contours):
             # Find the bounding box of the contour
             x, y, w, h = cv2.boundingRect(contour)
-        
+
             # Draw a rectangle around the contour on the colored image
             cv2.rectangle(cv_image_color, (x - padding, y - padding), (x + w + padding, y + h + padding), (0, 255, 0), 2)
-        
+
             # Crop the image to the bounding box with padding
             letter_image = cv_image_gray[max(0, y - padding):min(y + h + padding, cv_image_gray.shape[0]), 
                                         max(0, x - padding):min(x + w + padding, cv_image_gray.shape[1])]
-        
+
             # Convert the OpenCV image back to a PIL image
             letter_image = Image.fromarray(letter_image)
-        
+
+            # Make the image square by adding white padding
+            max_size = max(letter_image.size)
+            new_image = Image.new('L', (max_size, max_size), (255))  # 'L' for 8-bit pixels, black and white
+            new_image.paste(letter_image, ((max_size - letter_image.size[0])//2,
+                                           (max_size - letter_image.size[1])//2))
+
+            # Resize the image to 28x28
+            letter_image = new_image.resize((28, 28))
+            # Convert the PIL Image back to a numpy array
+            letter_image = np.array(letter_image)
+
+            # Rotate and flip the image
+            letter_image = cv2.rotate(letter_image, cv2.ROTATE_90_COUNTERCLOCKWISE)
+            letter_image = cv2.flip(letter_image, 0)
+            
+            cv2.imshow('Letter image', letter_image)
+            
+            letter_image = letter_image.astype('float32') / 255.0
+            letter_image = letter_image.reshape(1, 784)
+            
+            letter_image = 1 - letter_image
+
             prediction = prediction + "H"
+            
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
         
         # Show the image with rectangles
         cv2.imshow('Image with rectangles', cv_image_color)
