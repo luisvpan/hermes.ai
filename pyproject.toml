@@ -11,6 +11,8 @@ dependencies = [
     "pandas >= 2.2",
     "numpy >= 1.26",
     "click >= 8.1",
+    "opencv-python >= 4.9",
+    "pillow >= 10.3",
 ]
 
 [project.scripts]

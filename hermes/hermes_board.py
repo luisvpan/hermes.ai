@@ -1,10 +1,15 @@
+import os
+
 import tkinter as tk
 from PIL import ImageGrab
 from PIL import Image
 import cv2
 import numpy as np
+import keras
 
 alphabet_list = [chr(65 + i) for i in range(26)]
+
+model = keras.models.load_model(os.path.join(os.path.dirname(__file__), './model/Hermes.h5'))
 
 class WhiteboardApp:
     def __init__(self, root):
@@ -138,22 +143,19 @@ class WhiteboardApp:
             letter_image = cv2.rotate(letter_image, cv2.ROTATE_90_COUNTERCLOCKWISE)
             letter_image = cv2.flip(letter_image, 0)
             
-            cv2.imshow('Letter image', letter_image)
-            
             letter_image = letter_image.astype('float32') / 255.0
-            letter_image = letter_image.reshape(1, 784)
-            
             letter_image = 1 - letter_image
-
-            prediction = prediction + "H"
             
-            cv2.waitKey(0)
-            cv2.destroyAllWindows()
+            letter_image = letter_image.reshape(1, 784)
+
+            model_prediction = model.predict(letter_image)
+            category = np.argmax(model_prediction[0])
+            prediction = prediction + alphabet_list[category]
         
         # Show the image with rectangles
-        cv2.imshow('Image with rectangles', cv_image_color)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
+        # cv2.imshow('Image with rectangles', cv_image_color)
+        # cv2.waitKey(0)
+        # cv2.destroyAllWindows()
 
         # Show the prediction
         self.prediction_label.config(text=f"The model predicts: {prediction}")
