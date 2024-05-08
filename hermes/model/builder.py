@@ -41,7 +41,7 @@ class ModelBuilder():
         self.model.fit(
             x=normalized_training_images,
             y=normalized_training_labels,
-            epochs=30,
+            epochs=10,
             batch_size=20,
             validation_split=0.2,
         )

@@ -4,7 +4,7 @@ import click
 import tkinter as tk
 
 from .model.builder import ModelBuilder
-from .hermes_board import WhiteboardApp
+from .board import WhiteboardApp
 
 @click.group()
 def hermes() -> None:

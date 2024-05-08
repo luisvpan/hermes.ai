@@ -9,15 +9,17 @@ import keras
 
 alphabet_list = [chr(65 + i) for i in range(26)]
 
-model = keras.models.load_model(os.path.join(os.path.dirname(__file__), './model/Hermes.h5'))
+model = keras.models.load_model(os.path.join(os.path.dirname(__file__), './model/hermes.keras'))
 
 class WhiteboardApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Whiteboard")
 
-        self.canvas = tk.Canvas(root, width=1000, height=500, bg="white")
+        self.canvas = tk.Canvas(root, width=1300, height=700, bg="white")
         self.canvas.pack()
+
+        self.radius = 20
 
         self.draw_button = tk.Button(root, text="Draw", command=self.start_draw)
         self.draw_button.pack(side=tk.LEFT)
@@ -28,7 +30,13 @@ class WhiteboardApp:
         self.clear_button = tk.Button(root, text="Clear", command=self.clear_canvas)
         self.clear_button.pack(side=tk.LEFT)
 
-        self.drawing = False
+        self.increase_button = tk.Button(root, text="Increase", command=self.increase_thickness)
+        self.increase_button.pack(side=tk.LEFT)
+
+        self.decrease_button = tk.Button(root, text="Decrease", command=self.decrease_thickness)
+        self.decrease_button.pack(side=tk.LEFT)
+        
+        self.drawing = True
         self.erasing = False
         self.last_x, self.last_y = None, None
 
@@ -41,6 +49,10 @@ class WhiteboardApp:
         
         self.prediction_label = tk.Label(root, text="", font=("Helvetica", 16), fg="blue")
         self.prediction_label.pack(side=tk.BOTTOM, padx=10, pady=10)
+
+        self.radius_label = tk.Label(root, text="", font=("Helvetica", 16), fg="blue")
+        self.radius_label.pack(side=tk.BOTTOM, padx=10, pady=10)
+        self.radius_label.config(text=f"Size: {self.radius}")
 
     def start_action(self, event):
         if self.drawing:
@@ -76,11 +88,33 @@ class WhiteboardApp:
     def stop_erase(self, event=None):
         pass
 
+    def increase_thickness(self):
+        self.radius += 5
+        if self.radius > 50:  # Asegura que el radio nunca sea menor que 1
+            self.radius = 50
+        self.radius_label.config(text=f"Size: {self.radius}")
+
+    def decrease_thickness(self):
+        self.radius -= 5
+        if self.radius < 0:  # Asegura que el radio nunca sea menor que 1
+            self.radius = 0
+        self.radius_label.config(text=f"Size: {self.radius}")
+
+
+#    def draw_or_erase(self, event):
+#        if self.drawing:
+#            x, y = event.x, event.y
+#            radius = 10  # Radius of the circle
+#            self.canvas.create_oval(x - radius, y - radius, x + radius, y + radius, fill="black")
+#            self.last_x, self.last_y = x, y
+#        elif self.erasing:
+#            x, y = event.x, event.y
+#            self.canvas.create_rectangle(x - 5, y - 5, x + 5, y + 5, fill="white", outline="white")
+
     def draw_or_erase(self, event):
         if self.drawing:
             x, y = event.x, event.y
-            radius = 10  # Radius of the circle
-            self.canvas.create_oval(x - radius, y - radius, x + radius, y + radius, fill="black")
+            self.canvas.create_oval(x - self.radius, y - self.radius, x + self.radius, y + self.radius, fill="black")
             self.last_x, self.last_y = x, y
         elif self.erasing:
             x, y = event.x, event.y
@@ -113,11 +147,18 @@ class WhiteboardApp:
         
         # Sort the contours from left to right
         contours = sorted(contours_info, key=lambda contour: cv2.boundingRect(contour)[0])
+        prev_contour_x = 0
+        line_break_threshold = 50
 
         for i, contour in enumerate(contours):
             # Find the bounding box of the contour
             x, y, w, h = cv2.boundingRect(contour)
+            if i != 0:
+                if (x - prev_contour_x) > 300 or (y - prev_contour_y) > line_break_threshold:
+                    prediction = prediction + " "
 
+            prev_contour_x = x
+            prev_contour_y = y
             # Draw a rectangle around the contour on the colored image
             cv2.rectangle(cv_image_color, (x - padding, y - padding), (x + w + padding, y + h + padding), (0, 255, 0), 2)
 
@@ -147,6 +188,8 @@ class WhiteboardApp:
             letter_image = 1 - letter_image
             
             letter_image = letter_image.reshape(1, 784)
+
+            
 
             model_prediction = model.predict(letter_image)
             category = np.argmax(model_prediction[0])
