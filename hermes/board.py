@@ -19,7 +19,7 @@ class WhiteboardApp:
         self.canvas = tk.Canvas(root, width=1300, height=700, bg="white")
         self.canvas.pack()
 
-        self.radius = 20
+        self.radius = 10
 
         self.draw_button = tk.Button(root, text="Draw", command=self.start_draw)
         self.draw_button.pack(side=tk.LEFT)
@@ -118,7 +118,7 @@ class WhiteboardApp:
             self.last_x, self.last_y = x, y
         elif self.erasing:
             x, y = event.x, event.y
-            self.canvas.create_rectangle(x - 5, y - 5, x + 5, y + 5, fill="white", outline="white")
+            self.canvas.create_rectangle(x - self.radius, y - self.radius, x + self.radius, y + self.radius, fill="white", outline="white")
 
     def clear_canvas(self):
         self.canvas.delete("all")
@@ -147,18 +147,14 @@ class WhiteboardApp:
         
         # Sort the contours from left to right
         contours = sorted(contours_info, key=lambda contour: cv2.boundingRect(contour)[0])
-        prev_contour_x = 0
-        line_break_threshold = 50
+        
+        
 
         for i, contour in enumerate(contours):
             # Find the bounding box of the contour
             x, y, w, h = cv2.boundingRect(contour)
-            if i != 0:
-                if (x - prev_contour_x) > 300 or (y - prev_contour_y) > line_break_threshold:
-                    prediction = prediction + " "
-
-            prev_contour_x = x
-            prev_contour_y = y
+            
+          
             # Draw a rectangle around the contour on the colored image
             cv2.rectangle(cv_image_color, (x - padding, y - padding), (x + w + padding, y + h + padding), (0, 255, 0), 2)
 

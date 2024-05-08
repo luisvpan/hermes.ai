@@ -20,8 +20,10 @@ class ModelBuilder():
     def _setup_model_shape(self) -> None:
         self.model.add(keras.Input(shape=(28*28,)))
         self.model.add(keras.layers.Dense(256, activation='relu'))
+        self.model.add(keras.layers.Dropout(0.2))
+        self.model.add(keras.layers.Dense(128, activation='relu'))
         self.model.add(keras.layers.Dense(256, activation='relu'))
-        self.model.add(keras.layers.Dense(256, activation='relu'))
+        self.model.add(keras.layers.Dropout(0.2))
         self.model.add(keras.layers.Dense(26, activation='softmax'))
 
     def _train_model(self) -> None:
