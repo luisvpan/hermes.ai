@@ -14,7 +14,7 @@ def hermes() -> None:
 @hermes.command('build')
 def build_model() -> None:
     model = SuperModelBuilder().build_model()
-    model.save(os.path.join(os.path.dirname(__file__), './model/hermes.keras'))
+    model.save(os.path.join(os.path.dirname(__file__), './model/super_hermes.keras'))
 
 
 @hermes.command('predict')

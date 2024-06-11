@@ -9,7 +9,7 @@ import keras
 
 alphabet_list = [chr(65 + i) for i in range(26)]
 
-model = keras.models.load_model(os.path.join(os.path.dirname(__file__), './model/Hermes.h5'))
+model = keras.models.load_model(os.path.join(os.path.dirname(__file__), './model/super_hermes.keras'))
 
 class WhiteboardApp:
     def __init__(self, root):
@@ -146,7 +146,7 @@ class WhiteboardApp:
             letter_image = letter_image.astype('float32') / 255.0
             letter_image = 1 - letter_image
             
-            letter_image = letter_image.reshape(1, 784)
+            letter_image = letter_image.reshape(-1, 28, 28, 1)
 
             model_prediction = model.predict(letter_image)
             category = np.argmax(model_prediction[0])
